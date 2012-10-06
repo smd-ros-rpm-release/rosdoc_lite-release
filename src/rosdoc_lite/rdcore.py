@@ -38,6 +38,65 @@ import sys
 from subprocess import Popen, PIPE
 import yaml
 
+from catkin_pkg.package import Package, Export
+import rospkg
+
+#Helper object to pull the information rosdoc needs from both manifest and
+#package objects
+
+def convert_manifest_export(man_export):
+    e = Export(man_export.tag, man_export.str)
+    e.attributes = man_export.attrs
+    return e
+
+class PackageInformation(object):
+    __slots__ = ['license', 'author', 'description', 'status', 'brief', 'url', 'is_catkin', 'exports', 'depends']
+
+    def __init__(self, pkg_desc):
+        if isinstance(pkg_desc, Package):
+            self.create_from_package(pkg_desc)
+        elif isinstance(pkg_desc, rospkg.Manifest):
+            self.create_from_manifest(pkg_desc)
+
+    def create_from_package(self, package):
+        self.license = ', '.join(package.licenses)
+        self.author =  ', '.join([('%s <%s>' % (a.name, a.email) if a.email is not None else a.name) for a in package.authors])
+        self.description = package.description
+        
+        #we'll just use the first url with type website or the first URL of any type
+        websites = [url.url for url in package.urls if url.type == 'website']
+        if websites:
+            self.url = websites[0]
+        elif package.urls:
+            self.url = package.urls[0].url
+
+        self.is_catkin = True
+        self.exports = package.exports
+        self.status = None
+        self.brief = None
+        self.depends = []
+        self.depends.extend([dep.name for dep in package.build_depends])
+        self.depends.extend([dep.name for dep in package.buildtool_depends])
+        self.depends.extend([dep.name for dep in package.run_depends])
+        self.depends.extend([dep.name for dep in package.test_depends])
+
+    def create_from_manifest(self, manifest):
+        self.license = manifest.license
+        self.author = manifest.author
+        self.description = manifest.description
+        self.status = manifest.status
+        self.brief = manifest.brief
+        self.url = manifest.url
+        self.is_catkin = manifest.is_catkin
+        self.exports = [convert_manifest_export(e) for e in manifest.exports]
+        self.depends = [dep.name for dep in manifest.depends]
+        self.depends.extend([dep.name for dep in manifest.rosdeps])
+
+    def get_export(self, tag, attr):
+        vals = [e.attributes[attr] for e in self.exports \
+                if e.tagname == tag if e.attributes.has_key(attr)]
+        return vals
+
 def compute_relative(src, target):
     s1, s2 = [p.split(os.sep) for p in [src, target]]
     #filter out empties
