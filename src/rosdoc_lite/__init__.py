@@ -64,7 +64,7 @@ def get_optparse(name):
                       dest="quiet",
                       help="Suppress doxygen errors.")
     parser.add_option("-o",metavar="OUTPUT_DIRECTORY",
-                      dest="docdir", default='html', 
+                      dest="docdir", default='doc', 
                       help="The directory to write documentation to.")
     parser.add_option("-t", "--tagfile", metavar="TAGFILE", dest="tagfile", default=None,
                       help="Path to tag configuration file for Doxygen cross referencing support. Ex: /home/user/tagfiles_list.yaml")
@@ -129,6 +129,12 @@ def build_manifest_yaml(manifest, msgs, srvs, output_dir):
     external_docs = manifest.get_export('doxymaker', 'external')
     if external_docs:
         m_yaml['external_docmentation'] = external_docs
+
+    metapackage = [e for e in manifest.exports if e.tagname == 'metapackage']
+    if metapackage:
+        m_yaml['package_type'] = 'metapackage'
+    else:
+        m_yaml['package_type'] = 'package'
 
     with open(os.path.join(output_dir, 'manifest.yaml'), 'w') as f:
         yaml.safe_dump(m_yaml, f, default_flow_style=False)
