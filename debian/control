@@ -1,0 +1,15 @@
+Source: ros-fuerte-rosdoc-lite
+Section: misc
+Priority: extra
+Maintainer: Dirk Thomas <dthomas@willowgarage.com>
+Build-Depends: debhelper (>= 7.0.50~), ros-fuerte-catkin
+Homepage: http://www.ros.org/wiki/rosdoc_lite
+Standards-Version: 3.9.2
+
+Package: ros-fuerte-rosdoc-lite
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, python-epydoc,python-sphinx,ros-fuerte-genmsg,python-yaml,python-rospkg,doxygen
+Description: Infrastructure for generating documentation of ROS packages.
+ .
+ This stack contains the packages:
+ * /tmp/tmpKwmOpo/clone: rosdoc_lite wraps documentation tools like doxygen, sphinx, and epydoc with ROS package semantics to auto-generate documentation for ROS packages. rosdoc also supports online documentation, like the ROS wiki.
