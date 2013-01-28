@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # Software License Agreement (BSD License)
 #
 # Copyright (c) 2008, Willow Garage, Inc.
@@ -30,19 +29,19 @@
 # LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
-#
-# Revision $Id: __init__.py 16386 2012-02-25 18:54:45Z kwc $
+
+from __future__ import print_function
 
 import sys
 import os
-import time
 import traceback
 import yaml
 from subprocess import Popen, PIPE
 import shutil
 
-NAME='rosdoc_lite'
+NAME = 'rosdoc_lite'
 
+from . import rdcore
 from . import msgenator
 from . import epyenator
 from . import sphinxenator
@@ -53,6 +52,7 @@ import rospkg
 
 from catkin_pkg import packages
 
+
 def get_optparse(name):
     """
     Retrieve default option parser for rosdoc. Useful if building an
@@ -60,17 +60,18 @@ def get_optparse(name):
     """
     from optparse import OptionParser
     parser = OptionParser(usage="usage: %prog [options] [package_path]", prog=name)
-    parser.add_option("-q", "--quiet",action="store_true", default=False,
+    parser.add_option("-q", "--quiet", action="store_true", default=False,
                       dest="quiet",
                       help="Suppress doxygen errors.")
-    parser.add_option("-o",metavar="OUTPUT_DIRECTORY",
-                      dest="docdir", default='doc', 
+    parser.add_option("-o", metavar="OUTPUT_DIRECTORY",
+                      dest="docdir", default='doc',
                       help="The directory to write documentation to.")
     parser.add_option("-t", "--tagfile", metavar="TAGFILE", dest="tagfile", default=None,
                       help="Path to tag configuration file for Doxygen cross referencing support. Ex: /home/user/tagfiles_list.yaml")
-    parser.add_option("-g","--generate_tagfile",default=None, dest="generate_tagfile",
+    parser.add_option("-g", "--generate_tagfile", default=None, dest="generate_tagfile",
                       help="If specified, will generate a doxygen tagfile in this location. Ex: /home/user/tags/package.tag")
     return parser
+
 
 def load_rd_config(path, manifest):
     #load in any external config files
@@ -93,6 +94,7 @@ def load_rd_config(path, manifest):
 
     return rd_config
 
+
 def generate_build_params(rd_config, package):
     build_params = {}
     #if there's no config, we'll just build doxygen with the defaults
@@ -100,7 +102,7 @@ def generate_build_params(rd_config, package):
         build_params['doxygen'] = {'builder': 'doxygen', 'output_dir': '.'}
     #make sure that we have a valid rd_config
     elif type(rd_config) != list:
-        sys.stderr.write("WARNING: package [%s] had an invalid rosdoc config\n"%(package))
+        sys.stderr.write("WARNING: package [%s] had an invalid rosdoc config\n" % (package))
         build_params['doxygen'] = {'builder': 'doxygen', 'output_dir': '.'}
     #generate build parameters for the different types of builders
     else:
@@ -108,17 +110,19 @@ def generate_build_params(rd_config, package):
             for target in rd_config:
                 build_params[target['builder']] = target
         except KeyError:
-            sys.stderr.write("config file for [%s] is invalid, missing required 'builder' key\n"%(package))
+            sys.stderr.write("config file for [%s] is invalid, missing required 'builder' key\n" % (package))
         except:
-            sys.stderr.write("config file for [%s] is invalid\n"%(package))
+            sys.stderr.write("config file for [%s] is invalid\n" % (package))
             raise
 
     return build_params
+
 
 def build_manifest_yaml(manifest, msgs, srvs, output_dir):
     # by default, assume that packages are on wiki
     m_yaml = {}
     m_yaml['authors'] = manifest.author or ''
+    m_yaml['maintainers'] = manifest.maintainer or ''
     m_yaml['brief'] = manifest.brief or ''
     m_yaml['depends'] = manifest.depends or ''
     m_yaml['description'] = manifest.description or ''
@@ -126,6 +130,8 @@ def build_manifest_yaml(manifest, msgs, srvs, output_dir):
     m_yaml['msgs'] = msgs
     m_yaml['srvs'] = srvs
     m_yaml['url'] = manifest.url or ''
+    m_yaml['bugtracker'] = manifest.bugtracker or ''
+    m_yaml['repo_url'] = manifest.repo_url or ''
     external_docs = manifest.get_export('doxymaker', 'external')
     if external_docs:
         m_yaml['external_docmentation'] = external_docs
@@ -136,11 +142,20 @@ def build_manifest_yaml(manifest, msgs, srvs, output_dir):
     else:
         m_yaml['package_type'] = 'package'
 
+    deprecated = [e for e in manifest.exports if e.tagname == 'deprecated']
+    if deprecated:
+        m_yaml['deprecated'] = deprecated[0].content or "This package is deprecated."
+
     with open(os.path.join(output_dir, 'manifest.yaml'), 'w') as f:
         yaml.safe_dump(m_yaml, f, default_flow_style=False)
 
 
 def generate_docs(path, package, manifest, output_dir, tagfile, generate_tagfile, quiet=True):
+    """
+    Generates API docs by invoking plugins with context
+
+    :returns: a list of filenames/paths that is the union set of all results of plugin invocations
+    """
     plugins = [
         ('doxygen', doxygenator.generate_doxygen),
         ('epydoc', epyenator.generate_epydoc),
@@ -161,20 +176,18 @@ def generate_docs(path, package, manifest, output_dir, tagfile, generate_tagfile
         if generate_tagfile:
             build_params['doxygen']['generate_tagfile'] = generate_tagfile
 
-    print build_params
+    print(build_params)
 
     html_dir = os.path.join(output_dir, 'html')
 
     for plugin_name, plugin in plugins:
         #check to see if we're supposed to build each plugin
         if plugin_name in build_params:
-            start = time.time()
             try:
                 plugin(path, package, manifest, build_params[plugin_name], html_dir, quiet)
             except Exception, e:
                 traceback.print_exc()
-                print >> sys.stderr, "plugin [%s] failed"%(plugin_name)
-            timing = time.time() - start
+                print("plugin [%s] failed" % (plugin_name), file=sys.stderr)
 
     #Generate a landing page for the package, requires passing all the build_parameters on
     landing_page.generate_landing_page(package, manifest, build_params, html_dir)
@@ -184,51 +197,55 @@ def generate_docs(path, package, manifest, output_dir, tagfile, generate_tagfile
 
     #Write meta data for the package to a yaml file for use by external tools
     build_manifest_yaml(manifest, msgs, srvs, output_dir)
-            
+
     #We'll also write the message stylesheet that the landing page and message docs use
     styles_name = 'msg-styles.css'
     styles_in = os.path.join(rdcore.get_templates_dir(), styles_name)
     styles_css = os.path.join(html_dir, styles_name)
-    print "copying",styles_in, "to", styles_css
+    print("copying %s to %s" % (styles_in, styles_css))
     shutil.copyfile(styles_in, styles_css)
+
 
 def is_catkin(path):
     return os.path.isfile(os.path.join(path, 'package.xml'))
+
 
 def main():
     parser = get_optparse(NAME)
     options, args = parser.parse_args()
 
     if len(args) != 1:
-        print "Please give %s exactly one package path" % NAME
+        print("Please give %s exactly one package path" % NAME)
         parser.print_help()
         sys.exit(1)
 
     rp = rospkg.RosPack()
-    path = os.path.abspath(args[0])
+    path = os.path.realpath(args[0])
     package = os.path.basename(path)
 
     #Check whether we've got a catkin or non-catkin package
     if is_catkin(path):
         pkg_desc = packages.parse_package(path)
-        print "Documenting a catkin package"
+        print("Documenting a catkin package")
     else:
-        ros_path = os.path.abspath(rp.get_path(package))
+        try:
+            ros_path = os.path.realpath(rp.get_path(package))
+        except rospkg.common.ResourceNotFound as e:
+            sys.stderr.write("Rospack could not find the %s. Are you sure it's on your ROS_PACKAGE_PATH?\n" % package)
+            sys.exit(1)
         if ros_path != path:
             sys.stderr.write("The path passed in does not match that returned \
                              by rospack. Requested path: %s. Rospack path: %s.\n" % (path, ros_path))
             sys.exit(1)
         pkg_desc = rp.get_manifest(package)
-        print "Documenting a non-catkin package"
+        print("Documenting a non-catkin package")
 
     manifest = rdcore.PackageInformation(pkg_desc)
-    print "Documenting %s located here: %s" % (package, path)
+    print("Documenting %s located here: %s" % (package, path))
 
     try:
         generate_docs(path, package, manifest, options.docdir, options.tagfile, options.generate_tagfile, options.quiet)
-
-        print "Done documenting %s you can find your documentation here: %s" % (package, os.path.abspath(options.docdir))
-
+        print("Done documenting %s you can find your documentation here: %s" % (package, os.path.realpath(options.docdir)))
     except:
         traceback.print_exc()
         sys.exit(1)
