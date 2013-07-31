@@ -26,13 +26,14 @@ tracks:
     - git-bloom-generate -y rosrelease :{ros_distro} --source upstream -i :{release_inc}
     - git-bloom-generate -y rosdebian --prefix release/:{ros_distro} :{ros_distro}
       -i :{release_inc}
-    devel_branch: groovy-devel
+    devel_branch: master
     last_version: 0.2.2
-    name: upstream
+    name: rosdoc_lite
     patches: null
     release_inc: '0'
+    release_repo_url: git@github.com:ros-gbp/rosdoc_lite-release.git
     release_tag: :{version}
     ros_distro: hydro
     vcs_type: git
-    vcs_uri: git://github.com/ros-infrastructure/rosdoc_lite.git
+    vcs_uri: https://github.com/ros-infrastructure/rosdoc_lite.git
     version: :{auto}
