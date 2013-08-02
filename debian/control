@@ -1,0 +1,12 @@
+Source: ros-hydro-rosdoc-lite
+Section: misc
+Priority: extra
+Maintainer: Jack O'Quin <jack.oquin@gmail.com>
+Build-Depends: debhelper (>= 7.0.50~), ros-hydro-catkin
+Homepage: http://www.ros.org/wiki/rosdoc_lite
+Standards-Version: 3.9.2
+
+Package: ros-hydro-rosdoc-lite
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, doxygen, python-catkin-pkg, python-epydoc, python-kitchen, python-rospkg, python-sphinx, python-yaml, ros-hydro-genmsg
+Description: This ROS package wraps documentation tools like doxygen, sphinx, and epydoc, making it convenient to generate ROS package documentation. It also generates online documentation for the ROS wiki.
