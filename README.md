@@ -1,3 +1,22 @@
+## rosdoc_lite (indigo) - 0.2.4-0
+
+The packages in the `rosdoc_lite` repository were released into the `indigo` distro by running `/usr/bin/bloom-release rosdoc_lite -r indigo -t indigo --edit` on `Thu, 24 Apr 2014 01:35:51 -0000`
+
+The `rosdoc_lite` package was released.
+
+Version of package(s) in repository `rosdoc_lite`:
+- rosdistro version: `null`
+- old version: `null`
+- new version: `0.2.4-0`
+
+Versions of tools used:
+- bloom version: `0.5.4`
+- catkin_pkg version: `0.2.1`
+- rosdep version: `0.10.27`
+- rosdistro version: `0.3.5`
+- vcstools version: `0.1.33`
+
+
 ## rosdoc_lite (groovy) - 0.2.4-0
 
 The packages in the `rosdoc_lite` repository were released into the `groovy` distro by running `/usr/bin/bloom-release rosdoc_lite -r groovy -t groovy` on `Thu, 24 Apr 2014 01:29:50 -0000`
