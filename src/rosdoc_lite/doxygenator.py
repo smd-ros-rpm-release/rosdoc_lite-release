@@ -80,7 +80,7 @@ def load_manifest_vars(rd_config, package, manifest):
     author = license_str = description = status = brief = ''
 
     # by default, assume that packages are on wiki
-    home_url = 'http://ros.org/wiki/%s' % package
+    home_url = 'http://wiki.ros.org/%s' % package
     home_url = rd_config.get('homepage', home_url)
 
     project_link = '<a href="%s">%s</a>' % (home_url, package)
@@ -140,6 +140,7 @@ def package_doxygen_template(template, rd_config, path, package, html_dir, heade
     # set defaults for overridable keys
     file_patterns = '*.c *.cpp *.h *.cc *.hh *.hpp *.py *.dox *.java'
     excludes = '%s/build/' % path
+    predefined = ''
 
     #Read tagfiles from configuration rather than hardcoding
     tagfiles = ""
@@ -175,7 +176,8 @@ def package_doxygen_template(template, rd_config, path, package, html_dir, heade
               '$IMAGE_PATH': rd_config.get('image_path', path), #default to $INPUT
               '$EXCLUDE_SYMBOLS': rd_config.get('exclude_symbols', ''),
               '$TAGFILES': tagfiles,
-              '$GENERATE_TAGFILE': generate_tagfile
+              '$GENERATE_TAGFILE': generate_tagfile,
+              '$PREDEFINED': rd_config.get('predefined', predefined)
               }
     return rdcore.instantiate_template(template, dvars)
 
